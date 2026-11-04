@@ -1,28 +1,706 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#edf4f9"><meta name="description" content="A little clarity for your day. Live weather and a personal calendar.">
-<title>Daylight — Weather & Calendar</title><link rel="stylesheet" href="./style.css"><script src="./app.js" defer></script>
+    <title>Kindle Weather Dashboard</title>
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <meta name="viewport"
+          content="width=320, initial-scale=1, maximum-scale=1, user-scalable=0, target-densitydpi=medium-dpi">
+    <script src="vendor/moment/moment-with-locales.js" type="text/javascript"></script>
+    <script src="config.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="vendor/weathericons/css/weather-icons.css"/>
+    <link rel="stylesheet" type="text/css" href="css/custom-icons.css"/>
+    <link rel="stylesheet" type="text/css" href="css/kindle.css"/>
+
+    <script type="text/javascript">
+        var apiProtocol = window.location.protocol === 'file:' ? 'https:' : window.location.protocol;
+
+        var jsonp = function () {
+            return {
+                // JSONP Request
+                request: function (src, callback, id) {
+                    try {
+
+                        var self = this,
+                            script = null;
+
+                        self.done = false;
+
+                        if (typeof id === "undefined") {
+                            id = "jsonp";
+                        }
+
+                        if (document.getElementById(id) !== null) {
+                            script = document.getElementById(id);
+                            document.body.removeChild(script);
+                        }
+
+                        script = document.createElement('script');
+                        script.type = 'application/javascript';
+                        script.id = id;
+                        script.src = src;
+                        script.onerror = function () {
+                            showWeatherError("Weather connection failed. Check your connection and Settings.");
+                        };
+                        script.onload = function () {
+                            console.log("onload");
+
+                            if (typeof callback !== "undefined") {
+                                callback(self.responseObject);
+                            }
+
+                            script.onload = null;
+                            document.body.removeChild(script);
+                            script = null;
+                        };
+
+                        document.body.appendChild(script);
+                    } catch (exception) {
+                        console.log(exception);
+                    }
+                },
+
+                // JSONP Response
+                response: function (response) {
+                    try {
+                        this.responseObject = response;
+                    } catch (exception) {
+                        console.log(exception);
+                    }
+                }
+            }
+        }();
+
+
+        function refreshActualWeather() {
+            jsonp.request(apiProtocol + "//api.openweathermap.org/data/2.5/weather?" + _apiParams + "&callback=jsonp.response" + "&_timestamp=" + (new Date()).getTime()
+                , function (data) {
+                    processActualWeather(data);
+                }, "actualScript");
+        }
+
+        function refreshForecastWeather() {
+            var forecastPath = forecastType === "daily" ? "forecast/daily" : "forecast";
+            var url = apiProtocol + "//api.openweathermap.org/data/2.5/" + forecastPath + "?" + _apiParams;
+            if (forecastType === "daily") {
+                url += "&cnt=" + forecastCount;
+            }
+
+            jsonp.request(url + "&callback=jsonp.response" + "&_timestamp=" + (new Date()).getTime()
+                , function (data) {
+                    processForecastWeather(data);
+                }, "forecastScript");
+        }
+
+        function refreshData() {
+            setNightMode();
+            refreshActualWeather();
+            refreshForecastWeather();
+
+            if (!rtcSleepMode) {
+                window.setTimeout("refreshData()", refreshTime);
+            }
+        }
+
+        function processForecastWeather(data) {
+            if (!data || !data.city || !data.list) {
+                showWeatherError("Forecast unavailable. Check your OpenWeatherMap key and forecast access; try Hourly in Settings.");
+                return;
+            }
+            dataTimeZone = data.city.timezone
+
+            var count = Math.min(forecastCount, data.list.length);
+            for (var i = 0; i < count; i++) {
+                var forecast = data.list[i];
+
+                if (forecastType === "daily") {
+                    var minTemp = Math.round(forecast.temp.min);
+                    var maxTemp = Math.round(forecast.temp.max);
+                    forecastsCells[i].temp.innerHTML = minTemp + "/" + maxTemp + unitsSymbolHtml;
+                    forecastsCells[i].icon.className = getIconClassName(forecast.weather[0], new Date(forecast.dt * 1000));
+                    forecastsCells[i].desc.innerHTML = forecast.weather[0].description;
+                    forecastsCells[i].time.innerHTML = momentWithCorrectUtcOffset(new Date(forecast.dt * 1000)).format("ddd");
+                    forecastsCells[i].temp.className = "colTemp";
+                } else {
+                    var feelsLike = tempType == "feelsLike";
+                    forecastsCells[i].temp.innerHTML = (feelsLike ? Math.round(forecast.main.feels_like) : Math.round(forecast.main.temp)) + unitsSymbolHtml;
+                    forecastsCells[i].icon.className = getIconClassName(forecast.weather[0], new Date(forecast.dt * 1000));
+                    forecastsCells[i].desc.innerHTML = forecast.weather[0].description;
+                    forecastsCells[i].time.innerHTML = momentWithCorrectUtcOffset(new Date(forecast.dt * 1000)).format(timeFormat);
+                    forecastsCells[i].temp.className = feelsLike ? "colTemp feelsLike" : "colTemp";
+                }
+
+                forecastsCells[i].icon.style.transform = null;
+                forecastsCells[i].icon.style.webkitTransform = null;
+            }
+
+            setMoonIconsRotation(data.city.coord.lat)
+        }
+
+        function getIconClassName(weather, date) {
+            var isNight = weather.icon.slice(-1) === "n";
+            if (isNight && weather.id == 800) {
+                // Night clear -> real moon phase icon.
+                var phase = getMoonPhaseFromDate(date);
+                var icon = getMoonIconClasses(phase, isNightMode());
+                return icon;
+            }
+
+            return "wi wi-owm-" + (isNight ? "night-" : "day-") + weather.id;
+        }
+
+        function setsUnitsSymbolFromApiUrl(url) {
+            if (url.indexOf("units=metric") >= 0) {
+                unitsSymbolHtml = "<i class='wi wi-celsius'></i>";
+                return
+            }
+
+            if (url.indexOf("units=imperial") >= 0) {
+                unitsSymbolHtml = "<i class='wi wi-fahrenheit'></i>";
+                return
+            }
+
+            unitsSymbolHtml = "<span>K</span>";
+            return
+        }
+
+        function getApiParams() {
+            if (getUrlParameter("api_params")) {
+                var url = getUrlParameter("api_params");
+                setsUnitsSymbolFromApiUrl(url)
+                return url;
+            }
+
+            if (api_params) {
+                var url = api_params;
+                setsUnitsSymbolFromApiUrl(url)
+                return url;
+            }
+
+            var appId = getUrlParameter("appId") ? getUrlParameter("appId") : api_appId;
+            lang = getUrlParameter("lang") ? getUrlParameter("lang") : (api_lang || "en");
+            if (typeof(lang) === 'string') {
+                lang = lang.split(";", 1)
+            }
+            var units = getUrlParameter("units") ? getUrlParameter("units") : (api_units || "metric");
+
+            var locParams = api_locParams;
+            if (getUrlParameter("city")) {
+                locParams = "q=" + encodeURIComponent(getUrlParameter("city"));
+            } else if (getUrlParameter("lat") && getUrlParameter("lon")) {
+                locParams = "lat=" + encodeURIComponent(getUrlParameter("lat")) + "&lon=" + encodeURIComponent(getUrlParameter("lon"));
+            }
+
+            if (!locParams || !appId) {
+                return null;
+            }
+
+            var url = "";
+            if (locParams) {
+                url += locParams;
+            }
+            if (appId) {
+                url += "&appid=" + appId;
+            }
+            if (lang) {
+                url += "&lang=" + lang;
+            }
+            if (units) {
+                url += "&units=" + units;
+            }
+
+            setsUnitsSymbolFromApiUrl(url)
+            return url;
+        }
+
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + RegExp.escape(name) + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            if (!results) return null;
+            if (!results[1]) return '';
+            return decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        RegExp.escape = function (s) {
+            return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        };
+
+        function showWeatherError(message) {
+            var messageBox = document.getElementById("weatherError");
+            messageBox.style.display = "block";
+            messageBox.textContent = message;
+        }
+
+        function processActualWeather(data) {
+            if (!data || !data.main || !data.weather || !data.weather.length) {
+                showWeatherError("Weather unavailable. Check your OpenWeatherMap key and location in Settings.");
+                return;
+            }
+            document.getElementById("weatherError").style.display = "none";
+            dataTimeZone = data.timezone
+
+            var feelsLike = tempType == "feelsLike";
+            icon.className = getIconClassName(data.weather[0], new Date(data.dt * 1000));
+            icon.style.transform = null;
+            icon.style.webkitTransform = null;
+            temp.innerHTML = feelsLike ? Math.round(data.main.feels_like) : Math.round(data.main.temp);
+            temp.className = feelsLike ? "feelsLike" : "";
+            city.innerHTML = data.name;
+            description.innerHTML = data.weather[0].description;
+            lastUpdate.innerHTML = momentWithCorrectUtcOffset(new Date()).format(timeFormat) + "/" + momentWithCorrectUtcOffset(new Date(data.dt * 1000)).format(timeFormat);
+
+            date.innerHTML = momentWithCorrectUtcOffset(new Date()).format("dd, ll");
+
+            var sunrise = momentWithCorrectUtcOffset(new Date(data.sys.sunrise * 1000));
+            var sunset = momentWithCorrectUtcOffset(new Date(data.sys.sunset * 1000));
+
+            _sunriseHour = sunrise.hour();
+            _sunsetHour = sunset.hour();
+
+            sun.innerHTML = "<i class='" + getMoonIconClasses(getCurrentMoonPhase(), isNightMode()) + "'></i>&nbsp;&nbsp;<i class='wi wi-sunrise'></i> " + sunrise.format(timeFormat)
+                    + "&nbsp;&nbsp;<i class='wi wi-sunset'></i> " + sunset.format(timeFormat);
+            //  alert(data.name);
+            setNightMode();
+            setMoonIconsRotation(data.coord.lat)
+        }
+
+        /**
+         * http://www.ben-daglish.net/moon.shtml
+         * @param year
+         * @param month
+         * @param day
+         * @returns {number} They all return a single value - the phase day (0 to 1, where 0=new moon, 0.5=full etc.) for the selected date.
+         * @constructor
+         */
+        function getMoonPhase(year, month, day) {
+            var lp = 2551443;
+            var now = new Date(year, month - 1, day, 20, 35, 0);
+            var new_moon = new Date(1970, 0, 7, 20, 35, 0);
+            var phase = ((now.getTime() - new_moon.getTime()) / 1000) % lp;
+            return phase / lp;
+        }
+
+        function getMoonPhaseFromDate(date) {
+            var lp = 2551443;
+            var new_moon = new Date(1970, 0, 7, 20, 35, 0);
+            var phase = ((date.getTime() - new_moon.getTime()) / 1000) % lp;
+            return phase / lp;
+        }
+
+        /**
+         * @return {number} They all return a single value - the phase day (0 to 1, where 0=new moon, 0.5=full etc.) for the selected date.
+         */
+        function getCurrentMoonPhase() {
+            var now = new Date();
+            return getMoonPhase(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        }
+
+        function getMoonIconClasses(phase, isNightMode) {
+            var iconInterval = 1 / moonIcons.length;
+            var index = Math.floor(phase / iconInterval)
+
+            return "wi " + moonIcons[index][isNightMode ? 1 : 0] + " moonIcon " + (phase < 0.5 ? "moonFirstHalf" : "moonSecondHalf");
+        }
+
+        function setMoonIconsRotation(latitude) {
+            var rotation = (latitude - 90)
+            var elements = document.getElementsByClassName("moonIcon")
+
+            for (var i = 0; i < elements.length; i++) {
+                var direction = elements[i].className.indexOf("moonFirstHalf") !== -1 ? -1 : 1 
+                var transform = "rotate(" + (rotation * direction) + "deg)"
+                elements[i].style.transform = transform;
+                elements[i].style.webkitTransform = transform;
+            }
+        }
+
+        var cleaner = null;
+        var page = null;
+        var temp = null;
+        var icon = null;
+        var city = null;
+        var description = null;
+        var lastUpdate = null;
+        var date = null;
+        var sun = null;
+        var lang = null;
+
+        var forecastsCells = null;
+
+        var forecastCount = 5;
+        var forcedRotation = false;
+
+        var unitsSymbolHtml = "";
+
+        // [normal, night]
+        var moonIcons = [
+            ["wi-moon-alt-new", "wi-moon-alt-full"],
+            ["wi-moon-alt-waxing-crescent-1","wi-moon-alt-waning-gibbous-1"],
+            ["wi-moon-alt-waxing-crescent-2","wi-moon-alt-waning-gibbous-2"],
+            ["wi-moon-alt-waxing-crescent-3","wi-moon-alt-waning-gibbous-3"],
+            ["wi-moon-alt-waxing-crescent-4","wi-moon-alt-waning-gibbous-4"],
+            ["wi-moon-alt-waxing-crescent-5","wi-moon-alt-waning-gibbous-5"],
+            ["wi-moon-alt-waxing-crescent-6","wi-moon-alt-waning-gibbous-6"],
+            ["wi-moon-alt-first-quarter","wi-moon-alt-third-quarter"],
+            ["wi-moon-alt-waxing-gibbous-1","wi-moon-alt-waning-crescent-1"],
+            ["wi-moon-alt-waxing-gibbous-2","wi-moon-alt-waning-crescent-2"],
+            ["wi-moon-alt-waxing-gibbous-3","wi-moon-alt-waning-crescent-3"],
+            ["wi-moon-alt-waxing-gibbous-4","wi-moon-alt-waning-crescent-4"],
+            ["wi-moon-alt-waxing-gibbous-5","wi-moon-alt-waning-crescent-5"],
+            ["wi-moon-alt-waxing-gibbous-6","wi-moon-alt-waning-crescent-6"],
+            ["wi-moon-alt-full","wi-moon-alt-new"],
+            ["wi-moon-alt-waning-gibbous-1","wi-moon-alt-waxing-crescent-1"],
+            ["wi-moon-alt-waning-gibbous-2","wi-moon-alt-waxing-crescent-2"],
+            ["wi-moon-alt-waning-gibbous-3","wi-moon-alt-waxing-crescent-3"],
+            ["wi-moon-alt-waning-gibbous-4","wi-moon-alt-waxing-crescent-4"],
+            ["wi-moon-alt-waning-gibbous-5","wi-moon-alt-waxing-crescent-5"],
+            ["wi-moon-alt-waning-gibbous-6","wi-moon-alt-waxing-crescent-6"],
+            ["wi-moon-alt-third-quarter","wi-moon-alt-first-quarter"],
+            ["wi-moon-alt-waning-crescent-1","wi-moon-alt-waxing-gibbous-1"],
+            ["wi-moon-alt-waning-crescent-2","wi-moon-alt-waxing-gibbous-2"],
+            ["wi-moon-alt-waning-crescent-3","wi-moon-alt-waxing-gibbous-3"],
+            ["wi-moon-alt-waning-crescent-4","wi-moon-alt-waxing-gibbous-4"],
+            ["wi-moon-alt-waning-crescent-5","wi-moon-alt-waxing-gibbous-5"],
+            ["wi-moon-alt-waning-crescent-6","wi-moon-alt-waxing-gibbous-6"],
+        ];
+
+        var timeFormat = "HH:mm";
+
+        // Config parameters.
+        var api_params, api_appId, api_lang, api_units, api_locParams, rotation, night_mode, refreshTime, utcOffset, tempType, forecastType, rtcSleepMode, rtcWakeDelay;
+
+        utcOffset = getUrlParameter("utcOffset") ? getUrlParameter("utcOffset") : utcOffset;
+        tempType = getUrlParameter("tempType") ? getUrlParameter("tempType") : tempType;
+        forecastType = getUrlParameter("forecastType") ? getUrlParameter("forecastType") : forecastType;
+        refreshTime = getUrlParameter("refreshTime") ? getUrlParameter("refreshTime") * 60 * 1000 : refreshTime; // URL: minutes, config.js: milliseconds
+        rtcSleepMode = getUrlParameter("rtcSleepMode") ? getUrlParameter("rtcSleepMode") === "true" : !!rtcSleepMode;
+        rtcWakeDelay = getUrlParameter("rtcWakeDelay") ? getUrlParameter("rtcWakeDelay") * 1000 : rtcWakeDelay; // URL: seconds, config.js: milliseconds
+        
+
+        var dataTimeZone = 0;
+
+        // For night mode.
+        var _sunsetHour = 18;
+        var _sunriseHour = 6;
+
+        var _apiParams = null;
+
+        if (!refreshTime) {
+            refreshTime = 30 * 60 * 1000; // default 30 minutes
+        }
+        if (!rtcWakeDelay) {
+            rtcWakeDelay = 15 * 1000; // default 15 seconds
+        }
+        if (!forecastType) {
+            forecastType = "hour";
+        }
+
+        function rotate() {
+            var rot = getUrlParameter("rotation") ? getUrlParameter("rotation") : rotation;
+
+            var v = viewport();
+            var isPortrait = v.height > v.width;
+
+            if (isPortrait && rot === "ll") {
+                // landscape left
+                page.className = "landscape";
+                forcedRotation = true;
+
+                page.style.transform = "rotate(90deg)";
+                page.style.transformOrigin = "bottom left";
+                page.style.webkitTransform = "rotate(90deg)";
+                page.style.webkitTransformOrigin = "bottom left";
+                page.style.position = "absolute";
+                page.style.top = -v.width + "px";
+
+                page.style.height = v.width + "px";
+                page.style.width = v.height + "px";
+            } else if (isPortrait && rot === "lr") {
+                // landscape right
+                page.className = "landscape";
+                forcedRotation = true;
+
+                page.style.transform = "rotate(-90deg)";
+                page.style.transformOrigin = "bottom right";
+                page.style.webkitTransform = "rotate(-90deg)";
+                page.style.webkitTransformOrigin = "top left";
+                page.style.position = "absolute";
+                page.style.top = v.height + "px";
+
+                page.style.height = v.width + "px";
+                page.style.width = v.height + "px";
+            } else if (rot === "up") {
+                // upside down
+                page.className = isPortrait ? "portrait" : "landscape";
+                forcedRotation = false;
+
+                page.style.transform = "rotate(180deg)";
+                page.style.transformOrigin = "50% 50% 0";
+                page.style.webkitTransform = "rotate(180deg)";
+                page.style.webkitTransformOrigin = "50% 50% 0";
+            } else {
+                // reset css:
+                page.className = isPortrait ? "portrait" : "landscape";
+                forcedRotation = false;
+
+                page.style.transform = "";
+                page.style.transformOrigin = "";
+                page.style.webkitTransform = "";
+                page.style.webkitTransformOrigin = "";
+                page.style.position = "";
+                page.style.top = "";
+                page.style.background = "";
+
+                page.style.height = "";
+                page.style.width = "";
+            }
+        }
+
+        window.addEventListener('load', function () {
+            console.log("load");
+
+            _apiParams = getApiParams();
+            if (_apiParams === null) {
+                window.location = "config.html";
+                return;
+            }
+
+            moment.locale(momentLocale());
+
+            cleaner = document.getElementById("cleaner");
+
+            page = document.getElementById("page");
+            temp = document.getElementById("temp");
+            icon = document.getElementById("icon");
+
+            city = document.getElementById("city");
+            city.addEventListener('click', function (event) {
+                event.preventDefault();
+                window.location.href = "config.html" + window.location.search;
+                return false
+            });
+            temp.addEventListener('click', function (event) {
+                event.preventDefault();
+                var newHref = window.location.href.replace(/[&?]tempType=[^&]*/, "");
+                newHref = newHref + (newHref.indexOf("?") >= 0 ? "&" : "?") + "tempType=" + (tempType === "feelsLike" ? "actual" : "feelsLike")
+                window.location.href = newHref
+                return false
+            });
+            var forecastContainer = document.getElementById("forecast");
+            forecastContainer.addEventListener('click', function (event) {
+                event.preventDefault();
+                var newHref = window.location.href.replace(/[&?]forecastType=[^&]*/, "");
+                newHref = newHref + (newHref.indexOf("?") >= 0 ? "&" : "?") + "forecastType=" + (forecastType === "daily" ? "hour" : "daily");
+                window.location.href = newHref;
+                return false;
+            });
+            description = document.getElementById("description");
+            lastUpdate = document.getElementById("lastUpdate");
+            date = document.getElementById("date");
+            sun = document.getElementById("sun");
+
+            forecastsCells = [];
+            for (var i = 0; i < forecastCount; i++) {
+                forecastsCells.push({
+                    temp: document.getElementById("temp" + (i + 1)),
+                    icon: document.getElementById("icon" + (i + 1)),
+                    desc: document.getElementById("desc" + (i + 1)),
+                    time: document.getElementById("time" + (i + 1)),
+                });
+            }
+
+            refreshData();
+
+            // RTC sleep mode: single mechanism handles both sleep-wake and regular interval
+            if (rtcSleepMode) {
+                var lastRefresh = new Date().getTime();
+                var wakeDelayActive = false;
+                setInterval(function() {
+                    var now = new Date().getTime();
+                    var sinceRefresh = now - lastRefresh;
+                    if (sinceRefresh > refreshTime && !wakeDelayActive) {
+                        wakeDelayActive = true;
+                        setTimeout(function() {
+                            lastRefresh = new Date().getTime();
+                            refreshData();
+                            wakeDelayActive = false;
+                        }, rtcWakeDelay);
+                    }
+                }, 1000);
+            }
+
+            rotate();
+            setRem("load");
+            setNightMode();
+
+            // Set Cleanup for 4am
+            var now = new Date();
+            var cleanTime = (new Date()).setHours(4,0,0);
+            var diff = cleanTime - now;
+            if (diff < 0) {
+                diff += 86400000;
+            }
+            window.setTimeout("clearScreen()", diff);
+        });
+
+        window.addEventListener("resize", function() {
+            rotate();
+            setRem("resize");
+        });
+
+        // Simulating vh an vw with rem: http://stackoverflow.com/questions/13948713/is-there-any-cross-browser-javascript-for-making-vh-and-vw-units-work
+        // But kindle 4 doesn't support rem (so all sizes are fixed fallback for kindle 4)
+        // Kindle 4 viewport: 600x706 (landscape 800x506) (in window.load event, window.resize event is not called)
+        // Paperwhite 3 viewport: 1072x1268 (in window.load event it is 0x0, in window.resized
+        function viewport() {
+            var e = window, a = 'inner';
+            if (!('innerWidth' in window )) {
+                a = 'client';
+                e = document.documentElement || document.body;
+            }
+            return { width : e[ a+'Width' ] , height : e[ a+'Height' ] };
+        }
+
+        function setRem(prefix) {
+            var v = viewport();
+            var root = document.querySelector(":root");
+            root.style.fontSize = ((forcedRotation === false ? v.height : v.width) / 100) + "px";
+           // console.log("setting root font size to: " + v.height)
+          //  alert(prefix + " viewport:" + v.width + "x" + v.height);
+        }
+
+        function setNightMode() {
+            var root = document.querySelector(":root");
+            if (isNightMode()) {
+                root.className = "night";
+            } else {
+                root.className = null;
+            }
+        }
+
+        function isNightMode() {
+            var mode = getUrlParameter("night") ? getUrlParameter("night") : night_mode;
+            if (mode === "on") {
+                return true;
+            }
+
+            if (mode === "auto") {
+                return isNight(_sunsetHour, _sunriseHour);
+            }
+
+            var found = mode && mode.match(/([0-9][0-9]?)-([0-9][0-9]?)/);
+
+            if (found) {
+                return isNight(found[1], found[2]);
+            }
+
+            return false;
+        }
+
+        function isNight(f, t) {
+            var from = parseInt(f);
+            var to = parseInt(t);
+
+            var now = momentWithCorrectUtcOffset(new Date()).hour();
+
+            if (from > to) {
+                return from <= now || to > now;
+            } else {
+                return from <= now && to > now;
+            }
+        }
+
+        function momentLocale() {
+            var lang = getUrlParameter("lang") ? getUrlParameter("lang") : api_lang;
+            if (typeof(lang) === 'string') {
+                var langs = lang.split(";", 2)
+                return langs.length > 1 ? langs[1] : langs[0];
+            } else {
+                return null;
+            }
+        }
+
+        function clearScreen(times) {
+            if (typeof(times) == 'undefined') {
+                times = 5;
+            }
+
+            if (times <= 0) {
+                cleaner.style.display = 'none';
+                window.setTimeout("clearScreen()", 86400000);
+                return;
+            }
+
+            cleaner.style.display = 'block';
+            cleaner.style.background = times % 2 == 0 ? "#ffffff" : "#000000";
+            window.setTimeout(function () {
+                clearScreen(times - 1);
+            }, 500);
+        }
+
+        function momentWithCorrectUtcOffset(dateTime) {
+            // Default is auto
+            if (typeof(utcOffset) === 'undefined' || utcOffset === null || utcOffset === "") {
+                return moment(dateTime).utcOffset(dataTimeZone / 60, false)
+            } else if (utcOffset === 'local') {
+                return moment(dateTime);
+            } else {
+                return moment(dateTime).utcOffset(utcOffset, false);
+            }
+        }
+
+    </script>
+
 </head>
+
+
 <body>
-<div class="shell">
-<header><a class="brand" href="./"><span class="brand-icon">✳</span> daylight<span class="brand-sub">YOUR DAILY OUTLOOK</span></a><div class="header-right"><time id="clock"></time><button id="backup" class="quiet">Export events ↗</button></div></header>
-<main>
-<div class="intro"><div><p class="eyebrow" id="full-date"></p><h1>A little clarity for your day.</h1><p class="muted">See what’s ahead. Make room for what matters.</p></div><span class="pill"><span class="status-dot"></span> Your personal dashboard</span></div>
-<section class="weather-section" aria-labelledby="weather-title">
-<div class="section-top"><h2 id="weather-title">Your forecast <span class="section-note">A look outside</span></h2><div class="units" aria-label="Temperature unit"><button id="fahrenheit" aria-pressed="true">°F</button><button id="celsius" aria-pressed="false">°C</button></div></div>
-<div class="weather-layout"><div class="current-weather">
-<div class="location-row"><h3 id="location-name">Choose your city</h3><button id="locate" class="glass" title="Use my location">⌖ <span>Locate me</span></button></div>
-<div class="current-main"><span id="weather-icon" class="weather-icon" aria-hidden="true">☀</span><div><div class="temperature" id="temperature">—°</div><div id="condition">Weather awaits</div></div></div>
-<div class="weather-stats"><span>Feels like <strong id="feels">—</strong></span><span>Humidity <strong id="humidity">—</strong></span><span>Wind <strong id="wind">—</strong></span></div>
-<p id="weather-status" class="weather-status" role="status">Search for a city to see its forecast.</p>
-</div><div class="forecast-panel"><form id="search-form" class="search"><label class="sr-only" for="city">Search city</label><span aria-hidden="true">⌕</span><input id="city" placeholder="Search a city…" autocomplete="off" required minlength="2"><button type="submit">Search</button></form><div id="search-results" aria-label="City search results"></div><div class="forecast-title">THE NEXT 7 DAYS</div><div id="forecast" class="forecast"><p class="muted forecast-empty">A week of possibilities.<br>Your forecast will appear here.</p></div><a class="attribution" href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo ↗</a></div></div>
-</section>
-<section class="planning" aria-labelledby="calendar-title"><div class="calendar-card"><div class="calendar-top"><div><p class="eyebrow">MAKE TIME</p><h2 id="calendar-title"></h2></div><div class="month-controls"><button id="previous" aria-label="Previous month">‹</button><button id="today">Today</button><button id="next" aria-label="Next month">›</button></div></div><div class="weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div id="calendar" class="calendar" aria-label="Choose a date"></div><div class="calendar-legend"><span><i></i> Has events</span><span>Calendar uses your device’s time zone</span></div></div>
-<aside class="agenda"><div class="agenda-heading"><p class="eyebrow">YOUR SCHEDULE</p><button id="add-event" class="add" aria-label="Add an event">+</button></div><h2 id="selected-title"></h2><p id="selected-subtitle" class="muted"></p><div id="events"></div><div class="local-note"><span>◈</span><p>Your plans, kept close.<br>Events are saved in this browser. Export a backup to keep a copy.</p></div></aside></section>
-</main><footer><span>daylight <span class="muted">/ A calmer start.</span></span><span>Weather & plans, in one place.</span></footer>
+<div id="page">
+    <div id="weatherError" role="status" style="display:none;position:absolute;top:0;left:0;right:0;z-index:10;font:16px Arial;background:white;color:black;padding:12px;border-bottom:2px solid black;"></div>
+    <a id="city" href="./config.html"></a>
+    <div id="iconWrapper"><i id="icon"></i></div>
+    <div class="tempWrapper">
+        <div id="temp"></div>
+        <!--<i class="celsius wi wi-celsius"></i>-->
+    </div>
+    <div id="description"></div>
+    <div id="lastUpdate"></div>
+    <div class="forecast" id="forecast">
+        <div class="col col1">
+            <div id="time1" class="colTime"></div>
+            <div class="forecastIconWrapper"><i id="icon1" class="colIcon"></i></div>
+            <div id="temp1" class="colTemp"></div>
+            <div id="desc1" class="colDesc"></div>
+        </div>
+        <div class="col col2">
+            <div id="time2" class="colTime"></div>
+            <div class="forecastIconWrapper"><i id="icon2" class="colIcon"></i></div>
+            <div id="temp2" class="colTemp"></div>
+            <div id="desc2" class="colDesc"></div>
+        </div>
+        <div class="col col3">
+            <div id="time3" class="colTime"></div>
+            <div class="forecastIconWrapper"><i id="icon3" class="colIcon"></i></div>
+            <div id="temp3" class="colTemp"></div>
+            <div id="desc3" class="colDesc"></div>
+        </div>
+        <div class="col col4">
+            <div id="time4" class="colTime"></div>
+            <div class="forecastIconWrapper"><i id="icon4" class="colIcon"></i></div>
+            <div id="temp4" class="colTemp"></div>
+            <div id="desc4" class="colDesc"></div>
+        </div>
+        <div class="col col5">
+            <div id="time5" class="colTime"></div>
+            <div class="forecastIconWrapper"><i id="icon5" class="colIcon"></i></div>
+            <div id="temp5" class="colTemp"></div>
+            <div id="desc5" class="colDesc"></div>
+        </div>
+    </div>
+    <div id="date"></div>
+    <div id="sun"></div>
 </div>
-<dialog id="event-dialog"><form id="event-form"><div class="dialog-top"><h2 id="dialog-title">Make a little plan</h2><button type="button" id="close-dialog" class="quiet" aria-label="Close">✕</button></div><label>Event title<input id="event-title" required maxlength="120" placeholder="What’s on your mind?"></label><div class="form-row"><label>Date<input type="date" id="event-date" required></label><label>Time (optional)<input type="time" id="event-time"></label></div><label>Notes (optional)<textarea id="event-notes" maxlength="1000" rows="3" placeholder="A place, a reminder, a small detail…"></textarea></label><div class="dialog-actions"><button type="button" id="delete-event" class="danger" hidden>Delete event</button><button type="submit" class="primary">Save event</button></div></form></dialog>
-<div id="notice" class="notice" role="status" hidden></div>
-</body></html>
+<div id="cleaner"></div>
+</body>
+</html>

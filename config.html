@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <title>Kindle Weather Dashboard Config</title>
+    <style>
+        h1 {
+            text-align: center;
+        }
+        body {
+            margin: 10px;
+        }
+
+        form div {
+            margin: 10px 0;
+        }
+
+        input[name=city] {
+            width: 90%;
+            padding: 10px;
+        }
+
+        input[name=lat], input[name=lon] {
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+<h1>Kindle Weather Dashboard<br/>Config Page</h1>
+<p>Choose your location and enter your own OpenWeatherMap API key to show the dashboard.</p>
+<p><a href="calendar/">Open your weather &amp; calendar page</a></p>
+<form action="index.html" id="configForm">
+    <div>
+        <label>City: <br/><input type="text" name="city" id="city" /></label>
+    </div>
+    <div>Or GPS:</div>
+    <div>
+        <label>Lat (e.g. 50.123): <input type="text" name="lat" id="lat" /></label>
+        <label>Lon (e.g. 14.4): <input type="text" name="lon" id="lon" /></label>
+    </div>
+    <div>
+        <label>UTC offset: (kindle paperwhite (and maybe some others) doesn't report correct local time to the kindle (always it is GMT/UTC). If times on dashboard are bad, you can set custom offset, like 1, 2, -3 etc. You may need to set it again after winter/summer time change.)<br/>
+            <select name="utcOffset" id="utcOffset">
+                <option value="">default - auto by city or location</option>
+                <option value="local">local - reported by kindle/browser</option>
+                <option value="+01:00">+1 h</option>
+                <option value="-01:00">-1 h</option>
+                <option value="+02:00">+2 h</option>
+                <option value="-02:00">-2 h</option>
+                <option value="+03:00">+3 h</option>
+                <option value="-03:00">-3 h</option>
+                <option value="+04:00">+4 h</option>
+                <option value="-04:00">-4 h</option>
+                <option value="+05:00">+5 h</option>
+                <option value="-05:00">-5 h</option>
+                <option value="+06:00">+6 h</option>
+                <option value="-06:00">-6 h</option>
+                <option value="+07:00">+7 h</option>
+                <option value="-07:00">-7 h</option>
+                <option value="+08:00">+8 h</option>
+                <option value="-08:00">-8 h</option>
+                <option value="+09:00">+9 h</option>
+                <option value="-09:00">-9 h</option>
+                <option value="+10:00">+10 h</option>
+                <option value="-10:00">-10 h</option>
+                <option value="+11:00">+11 h</option>
+                <option value="-11:00">-11 h</option>
+                <option value="+12:00">+12 h</option>
+                <option value="-12:00">-12 h</option>
+                <option value="+13:00">+13 h</option>
+                <option value="-13:00">-13 h</option>
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Language: <br/>
+            <select name="lang" id="lang">
+                <!-- a;b (a == owm lang, b = moment locale (if different))-->
+                <option value="">default</option>
+                <option value="sk">Slovak (sk)</option>
+                <option value="en">English (en)</option>
+                <option value="af">Afrikaans (af)</option>
+                <option value="al;sq">Albanian (al/sq)</option>
+                <option value="ar">Arabic (ar)</option>
+                <option value="az">Azerbaijani (az)</option>
+                <option value="bg">Bulgarian (bg)</option>
+                <option value="ca">Catalan (ca)</option>
+                <option value="cz;cs">Czech (cz/cs)</option>
+                <option value="da">Danish (da)</option>
+                <option value="de">German (de)</option>
+                <option value="el">Greek (el)</option>
+                <option value="eu">Basque (eu)</option>
+                <option value="fa">Persian (Farsi) (fa)</option>
+                <option value="fi">Finnish (fi)</option>
+                <option value="fr">French (fr)</option>
+                <option value="gl">Galician (gl)</option>
+                <option value="he">Hebrew (he)</option>
+                <option value="hi">Hindi (hi)</option>
+                <option value="hr">Croatian (hr)</option>
+                <option value="hu">Hungarian (hu)</option>
+                <option value="id">Indonesian (id)</option>
+                <option value="it">Italian (it)</option>
+                <option value="ja">Japanese (ja)</option>
+                <option value="kr;ko">Korean (kr/ko)</option>
+                <option value="la">Latvian (la)</option>
+                <option value="lt">Lithuanian (lt)</option>
+                <option value="mk">Macedonian (mk)</option>
+                <option value="no;nb">Norwegian (no)</option>
+                <option value="nl">Dutch (nl)</option>
+                <option value="pl">Polish (pl)</option>
+                <option value="pt">Portuguese (pt)</option>
+                <option value="pt_br">Português Brasil (pt_br)</option>
+                <option value="ro">Romanian (ro)</option>
+                <option value="ru">Russian (ru)</option>
+                <option value="sv">Swedish (sv)</option>
+                <option value="sl">Slovenian (sl)</option>
+                <option value="es">Spanish (es)</option>
+                <option value="sr">Serbian (sr)</option>
+                <option value="th">Thai (th)</option>
+                <option value="tr">Turkish (tr)</option>
+                <option value="uk">Ukrainian (uk)</option>
+                <option value="vi">Vietnamese (vi)</option>
+                <option value="zh_cn">Chinese Simplified (zh_cn)</option>
+                <option value="zh_tw">Chinese Traditional (zh_tw)</option>
+                <option value="zu">Zulu (zu)</option>
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Rotation: <br/>
+            <select name="rotation" id="rotation">
+                <option value="">default</option>
+                <option value="none">None</option>
+                <option value="ll">Landscape Left</option>
+                <option value="lr">Landscape right</option>
+                <option value="up">Upside down</option>
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Units: <br/>
+            <select name="units" id="units">
+                <option value="">default</option>
+                <option value="metric">Metric - °C</option>
+                <option value="imperial">Imperial - Fahrenheit</option>
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Show: <br/>
+            <select name="tempType" id="tempType">
+                <option value="">default</option>
+                <option value="actual">Actual temperature</option>
+                <option value="feelsLike">Feels like temperature</option>
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Forecast: <br/>
+            <select name="forecastType" id="forecastType">
+                <option value="">default</option>
+                <option value="hour">Hourly (3h steps)</option>
+                <option value="daily">Daily</option>
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Night Mode: <br/>
+            <select name="night" id="night">
+                <option value="">default</option>
+                <option value="off">off</option>
+                <option value="auto">sunset - sunrise</option>
+                <option value="on">always</option>
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Refresh time (leave it blank for default): <br/><input type="text" name="refreshTime" id="refreshTime"/></label>
+    </div>
+    <div>
+        <label>OpenWeatherMap API key: <br/><input type="text" name="appId" id="appId" required autocomplete="off"/></label>
+    </div>
+    <div>
+        <input type="submit" value="Show Dashboard"/>
+    </div>
+</form>
+<p><small>This static dashboard sends the key to OpenWeatherMap and includes it in your dashboard URL. Keep that URL private and do not put the key in this public repository.</small></p>
+<div><small>"default" means the value from your <strong>config.js</strong> file will be used, or a built-in fallback if not configured there.</small></div>
+<div>Original dashboard by matopeto. Source and more info: <a href="https://github.com/matopeto/kindle-weather-dashboard" target="_blank" rel="noopener">https://github.com/matopeto/kindle-weather-dashboard</a></div>
+<script type="application/javascript">
+    document.getElementById("configForm").onsubmit = function () {
+        if (!document.getElementById("city").value.replace(/^\s+|\s+$/g, "") &&
+            !(document.getElementById("lat").value && document.getElementById("lon").value)) {
+            alert("Enter a city, or both latitude and longitude.");
+            return false;
+        }
+        return true;
+    };
+    var params={};
+    window.location.search
+        .replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str,key,value) {
+                params[key] = decodeURIComponent(value);
+            }
+        );
+
+    function setIfPresent(name) {
+        if (params[name] != undefined && params[name] !== "") {
+            document.getElementById(name).value = params[name];
+        }
+    }
+
+    setIfPresent("city");
+    setIfPresent("lat");
+    setIfPresent("lon");
+    setIfPresent("lang");
+    setIfPresent("rotation");
+    setIfPresent("units");
+    setIfPresent("night");
+    setIfPresent("appId");
+    setIfPresent("utcOffset");
+    setIfPresent("tempType");
+    setIfPresent("forecastType");
+    setIfPresent("refreshTime");
+</script>
+</body>
+</html>
