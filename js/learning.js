@@ -39,7 +39,9 @@
     function fit() {
         var nw = window.innerWidth || document.documentElement.clientWidth;
         var nh = window.innerHeight || document.documentElement.clientHeight;
-        var rotation = parameter("rotation"), sideways = rotation === "ll" || rotation === "lr";
+        var rotation = parameter("rotation");
+        if (!rotation || rotation === "auto") { rotation = nh > nw ? "ll" : "normal"; }
+        var sideways = rotation === "ll" || rotation === "lr";
         var width = sideways ? nh : nw, height = sideways ? nw : nh, page = document.getElementById("page");
         page.style.width = width + "px"; page.style.height = height + "px";
         var transform = "";
@@ -82,7 +84,23 @@
             setText(romaji, entry.romaji); reading.appendChild(romaji);
             // Use a compact first gloss, retaining the full meaning in title and JSON.
             var meaning = cell(row, "word-meaning", entry.meaning.split(";")[0], "en");
-            meaning.setAttribute("title", entry.meaning); rows.appendChild(row);
+            meaning.setAttribute("title", entry.meaning);
+            if (entry.example) {
+                var example = cell(row, "word-example", "", "ja");
+                var japanese = document.createElement("span");
+                japanese.className = "example-ja"; japanese.setAttribute("lang", "ja");
+                setText(japanese, entry.example.ja); example.appendChild(japanese);
+                var english = document.createElement("span");
+                english.className = "example-en"; english.setAttribute("lang", "en");
+                setText(english, entry.example.en); example.appendChild(english);
+                if (entry.example.tatoeba_id) {
+                    var source = document.createElement("a");
+                    source.className = "example-source";
+                    source.href = "https://tatoeba.org/en/sentences/show/" + entry.example.tatoeba_id;
+                    setText(source, "Tatoeba"); example.appendChild(source);
+                }
+            }
+            rows.appendChild(row);
         }
         put("wordCount", words.length ? words.length + " study words · new set every 30 min" : "Word list unavailable");
         lastWordAt = new Date().getTime();
@@ -94,7 +112,10 @@
             "word-japanese": Math.max(22, textScale * 4.4),
             "word-reading": Math.max(15, textScale * 2.5),
             "word-romaji": Math.max(11, textScale * 1.7),
-            "word-meaning": Math.max(15, textScale * 2.4)
+            "word-meaning": Math.max(15, textScale * 2.4),
+            "example-ja": Math.max(16, textScale * 2.5),
+            "example-en": Math.max(13, textScale * 2),
+            "example-source": 10
         };
         var elements = document.getElementById("wordRows").getElementsByTagName("*");
         for (var i = 0; i < elements.length; i++) {

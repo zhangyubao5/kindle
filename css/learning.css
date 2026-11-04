@@ -28,3 +28,20 @@ td{display:block}
 .word-reading,.word-meaning{display:inline-block;vertical-align:top}
 .word-reading{width:42%;padding-left:18px}
 .word-meaning{width:58%}
+
+/* Landscape learning cards: no Grid or Flexbox needed on older Kindles. */
+table,tbody{display:block;height:100%;width:100%}
+tr{float:left;width:50%;height:100%;min-height:100%;padding:7px 12px 5px 0;overflow:auto;border:0;border-top:1px solid}
+tr+tr{padding-left:16px;padding-right:0;border-left:1px solid}
+tr:last-child{border-bottom:0}
+.word-number{top:10px}
+tr+tr .word-number{left:16px}
+.word-japanese{padding-left:18px;padding-bottom:8px}
+.word-reading,.word-meaning{display:block;width:100%;padding-left:18px}
+.word-romaji{display:inline;margin-left:9px}
+.word-meaning{padding-top:5px}
+.word-example{width:100%;padding:10px 0 0 18px}
+.example-ja{display:block;font:16px "Noto Sans CJK JP",Meiryo,sans-serif;line-height:1.4}
+.example-en{display:block;font:13px Arial,sans-serif;line-height:1.35;margin-top:5px}
+.example-source{display:inline-block;font:10px Arial,sans-serif;margin-top:5px;padding:3px 0}
+.words-area{overflow:hidden}

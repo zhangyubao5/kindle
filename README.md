@@ -24,3 +24,9 @@ The page uses ES5 JavaScript, simple block/table layouts, pixel-sized text fallb
 Pacific time uses Moment Timezone 0.6.6 and the bundled IANA 2026f America/Los_Angeles zone. See vendor/moment/TIMEZONE-SOURCE.md and vendor/moment/LICENSE-timezone. Update this data if time-zone rules change.
 
 The device must have a correct date/time and support JavaScript. A browser page cannot prevent the Kindle's system screen saver or wake a sleeping device. Tested with browser previews and automated clock checks; physical Kindle hardware was not available.
+
+## Landscape and usage examples
+
+The dashboard defaults to horizontal landscape. Portrait browser windows rotate the dashboard by 90 degrees; windows already in landscape stay unrotated. Settings offer automatic landscape, either rotation direction, upside down, or no rotation.
+
+The two words are displayed side by side. Every word has a predefined Japanese example and English translation stored in the repository. Tatoeba examples retain source IDs and links; a few short original examples fill gaps or replace long source examples. See data/README.md for details. The large Japanese headwords and Pacific-time clock are preserved.
