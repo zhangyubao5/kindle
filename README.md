@@ -3,8 +3,8 @@
 A monochrome clock and N5 vocabulary dashboard for e-ink screens. The main page makes no weather requests and requires no API key.
 
 - Large 24-hour clock, updated once per minute, with date and time-zone label.
-- Five distinct random N5 words at a time, with kana, romaji and a compact English meaning. The full gloss is retained in the word list and each meaning's title attribute.
-- **Next 5 words** changes the whole set immediately. The set also changes every 30 minutes. Adjacent sets do not overlap when the vocabulary pool is large enough.
+- Two distinct random N5 words at a time, with kana, romaji and a compact English meaning. The full gloss is retained in the word list and each meaning's title attribute.
+- **Next 2 words** changes the whole set immediately. The set also changes every 30 minutes. Adjacent sets do not overlap when the vocabulary pool is large enough.
 - Pacific time is the default, with automatic PST/PDT daylight saving changes. Clock settings also support device time, fixed UTC offsets, rotation, and night mode. Fixed offsets do not automatically adjust for daylight saving time.
 
 Open the site root or index.html. Choose **Clock settings**, then bookmark the resulting dashboard URL. All assets are local and project-relative. GitHub Pages publishes main from /(root); no build step is required.

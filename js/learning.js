@@ -1,4 +1,4 @@
-/* Clock and five-word batches. ES5 syntax for older Kindle browsers. */
+/* Clock and two-word batches. ES5 syntax for older Kindle browsers. */
 (function () {
     var words = window.KINDLE_N5_WORDS || [], currentIndices = [], lastMinute = "", lastWordAt = 0;
     var interval = 30 * 60 * 1000;
@@ -64,13 +64,13 @@
             if (currentIndices.indexOf(i) === -1) { pool.push(i); }
         }
         // Avoid the last set when possible; every set contains distinct entries.
-        if (pool.length < Math.min(5, words.length)) {
+        if (pool.length < Math.min(2, words.length)) {
             pool = []; for (i = 0; i < words.length; i++) { pool.push(i); }
         }
         currentIndices = [];
         var rows = document.getElementById("wordRows");
         while (rows.firstChild) { rows.removeChild(rows.firstChild); }
-        for (i = 0; i < 5 && pool.length; i++) {
+        for (i = 0; i < 2 && pool.length; i++) {
             var chosen = Math.floor(Math.random() * pool.length), index = pool.splice(chosen, 1)[0];
             currentIndices.push(index);
             var entry = words[index], row = document.createElement("tr");
