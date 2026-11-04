@@ -1,36 +1,5 @@
-/* Reserve separate areas for the clock, weather, forecast and vocabulary. */
-#liveClock { position:absolute; top:1.5%; left:3.3%; font:65px Arial,sans-serif; font-size:9rem; line-height:1.05; font-variant-numeric:tabular-nums; }
-#clockZone { position:absolute; top:11.5%; left:3.5%; font-size:11px; font-size:1.7rem; }
-#date { top:15%; bottom:auto; font-size:17px; font-size:2.5rem; }
-#city { max-width:45%; overflow:hidden; font-size:31px; font-size:4.5rem; }
-#iconWrapper { top:20%; left:5%; }
-#icon, .landscape #icon { font-size:125px; font-size:18rem; }
-.tempWrapper { top:17%; }
-#temp, .landscape #temp { font-size:140px; font-size:20rem; }
-#description { bottom:61%; max-width:55%; font-size:24px; font-size:3.5rem; }
-#lastUpdate, .landscape #lastUpdate { bottom:61%; font-size:9px; font-size:1.3rem; }
-.forecast { bottom:34%; height:24%; }
-.colTime, .landscape .colTime { font-size:20px; font-size:3rem; margin-top:3%; }
-.forecastIconWrapper, .landscape .forecastIconWrapper { font-size:47px; font-size:6.8rem; }
-.colTemp, .landscape .colTemp { font-size:25px; font-size:3.6rem; }
-.colDesc, .landscape .colDesc { font-size:12px; font-size:1.8rem; }
-#sun, .landscape #sun { font-size:13px; font-size:1.9rem; bottom:1%; }
-.word-card { position:absolute; top:68%; bottom:6%; left:3.3%; right:3.3%; border-bottom:1px solid; padding-bottom:1%; overflow:auto; }
-.word-heading { font:10px Arial,sans-serif; font-size:1.5rem; letter-spacing:1px; }
-.word-heading span { letter-spacing:0; margin-left:8px; }
-#nextWord { position:absolute; top:0; right:0; color:inherit; background:transparent; border:1px solid; border-radius:0; font:12px Arial,sans-serif; font-size:1.8rem; padding:4px 8px; cursor:pointer; }
-#nextWord:focus { outline:2px solid; outline-offset:2px; }
-.word-main { margin-top:2%; padding-right:2%; }
-#japaneseWord { font:36px "Noto Sans CJK JP","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif; font-size:5.2rem; line-height:1.2; margin-right:12px; }
-.word-reading { display:inline-block; vertical-align:middle; }
-#japaneseReading { display:block; font:17px "Noto Sans CJK JP",Meiryo,sans-serif; font-size:2.5rem; }
-#japaneseRomaji { display:block; font:12px Arial,sans-serif; font-size:1.7rem; margin-top:3px; }
-#japaneseMeaning { font:18px Arial,sans-serif; font-size:2.6rem; margin-top:2%; line-height:1.25; }
-.long-meaning #japaneseMeaning { font-size:14px; font-size:2rem; }
-.word-credit { position:absolute; bottom:1%; left:3.3%; font:8px Arial,sans-serif; font-size:1.2rem; }
-.night #weatherError { color:white !important; background:black !important; border-color:white !important; }
-#weatherError { top:41% !important; padding:3px 8px !important; font-size:10px !important; font-size:1.5rem !important; }
-.landscape #city { font-size:4.5rem; }
-.landscape #description { font-size:3.5rem; }
-.landscape #date { font-size:2.5rem; }
-@media (max-width:480px) { .word-heading span { display:block; margin:3px 0 0; font-size:1.2rem; } .word-main { margin-top:1%; } }
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;padding:0;font-family:Arial,sans-serif;color:#000;background:#fff}#page{position:relative;width:100%;height:100%;overflow:auto;transform-origin:0 0;-webkit-transform-origin:0 0}a{color:inherit}
+#clockPanel{position:absolute;top:1%;left:4%;right:4%;height:30%;text-align:center}#liveClock{display:block;font:150px Arial,sans-serif;line-height:1;letter-spacing:-.045em;font-variant-numeric:tabular-nums}#date{font-size:21px;font-size:3rem;margin-top:.4rem}#clockZone{font-size:10px;font-size:1.5rem;margin-top:.6rem}
+#vocabulary{position:absolute;top:34%;left:4%;right:4%;bottom:5%}.word-toolbar{height:11%;position:relative}h1{font-size:12px;font-size:1.8rem;font-weight:normal;letter-spacing:.12em;margin:0}#wordCount{font-size:9px;font-size:1.4rem;margin:.5rem 0 0}#nextWords{position:absolute;right:0;top:0;padding:.7rem 1.1rem;color:inherit;background:transparent;border:1px solid;border-radius:0;font:12px Arial,sans-serif;font-size:1.8rem;cursor:pointer}button:focus-visible,a:focus-visible{outline:2px solid;outline-offset:3px}
+.words-area{position:absolute;top:13%;left:0;right:0;bottom:0;overflow:auto}table{width:100%;height:100%;border-collapse:collapse;table-layout:fixed}tr{height:20%;border-top:1px solid}tr:last-child{border-bottom:1px solid}td{vertical-align:middle;padding:.6rem .7rem;overflow-wrap:break-word;word-wrap:break-word}.word-number{width:5%;font-size:9px;font-size:1.4rem;padding-left:0}.word-japanese{width:27%;font:31px "Noto Sans CJK JP","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;font-size:4.4rem;line-height:1.15}.word-japanese.long-word{font-size:22px;font-size:3.2rem}.word-reading{width:29%;font:17px "Noto Sans CJK JP",Meiryo,sans-serif;font-size:2.5rem;line-height:1.2}.word-romaji{display:block;font:12px Arial,sans-serif;font-size:1.7rem;margin-top:.5rem}.word-meaning{width:39%;font-size:17px;font-size:2.4rem;line-height:1.25;padding-right:0}
+footer{position:absolute;bottom:1%;left:4%;right:4%;font-size:8px;font-size:1.2rem}#settingsLink{float:right}html.night,.night body{color:#fff;background:#000}@media(max-width:480px){.word-reading,.word-meaning{font-size:2.2rem}}
