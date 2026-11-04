@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#edf4f9"><meta name="description" content="A little clarity for your day. Live weather and a personal calendar.">
+<title>Daylight — Weather & Calendar</title><link rel="stylesheet" href="./style.css"><script src="./app.js" defer></script>
+</head>
+<body>
+<div class="shell">
+<header><a class="brand" href="./"><span class="brand-icon">✳</span> daylight<span class="brand-sub">YOUR DAILY OUTLOOK</span></a><div class="header-right"><time id="clock"></time><button id="backup" class="quiet">Export events ↗</button></div></header>
+<main>
+<div class="intro"><div><p class="eyebrow" id="full-date"></p><h1>A little clarity for your day.</h1><p class="muted">See what’s ahead. Make room for what matters.</p></div><span class="pill"><span class="status-dot"></span> Your personal dashboard</span></div>
+<section class="weather-section" aria-labelledby="weather-title">
+<div class="section-top"><h2 id="weather-title">Your forecast <span class="section-note">A look outside</span></h2><div class="units" aria-label="Temperature unit"><button id="fahrenheit" aria-pressed="true">°F</button><button id="celsius" aria-pressed="false">°C</button></div></div>
+<div class="weather-layout"><div class="current-weather">
+<div class="location-row"><h3 id="location-name">Choose your city</h3><button id="locate" class="glass" title="Use my location">⌖ <span>Locate me</span></button></div>
+<div class="current-main"><span id="weather-icon" class="weather-icon" aria-hidden="true">☀</span><div><div class="temperature" id="temperature">—°</div><div id="condition">Weather awaits</div></div></div>
+<div class="weather-stats"><span>Feels like <strong id="feels">—</strong></span><span>Humidity <strong id="humidity">—</strong></span><span>Wind <strong id="wind">—</strong></span></div>
+<p id="weather-status" class="weather-status" role="status">Search for a city to see its forecast.</p>
+</div><div class="forecast-panel"><form id="search-form" class="search"><label class="sr-only" for="city">Search city</label><span aria-hidden="true">⌕</span><input id="city" placeholder="Search a city…" autocomplete="off" required minlength="2"><button type="submit">Search</button></form><div id="search-results" aria-label="City search results"></div><div class="forecast-title">THE NEXT 7 DAYS</div><div id="forecast" class="forecast"><p class="muted forecast-empty">A week of possibilities.<br>Your forecast will appear here.</p></div><a class="attribution" href="https://open-meteo.com/" target="_blank" rel="noopener">Weather data by Open-Meteo ↗</a></div></div>
+</section>
+<section class="planning" aria-labelledby="calendar-title"><div class="calendar-card"><div class="calendar-top"><div><p class="eyebrow">MAKE TIME</p><h2 id="calendar-title"></h2></div><div class="month-controls"><button id="previous" aria-label="Previous month">‹</button><button id="today">Today</button><button id="next" aria-label="Next month">›</button></div></div><div class="weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div id="calendar" class="calendar" aria-label="Choose a date"></div><div class="calendar-legend"><span><i></i> Has events</span><span>Calendar uses your device’s time zone</span></div></div>
+<aside class="agenda"><div class="agenda-heading"><p class="eyebrow">YOUR SCHEDULE</p><button id="add-event" class="add" aria-label="Add an event">+</button></div><h2 id="selected-title"></h2><p id="selected-subtitle" class="muted"></p><div id="events"></div><div class="local-note"><span>◈</span><p>Your plans, kept close.<br>Events are saved in this browser. Export a backup to keep a copy.</p></div></aside></section>
+</main><footer><span>daylight <span class="muted">/ A calmer start.</span></span><span>Weather & plans, in one place.</span></footer>
+</div>
+<dialog id="event-dialog"><form id="event-form"><div class="dialog-top"><h2 id="dialog-title">Make a little plan</h2><button type="button" id="close-dialog" class="quiet" aria-label="Close">✕</button></div><label>Event title<input id="event-title" required maxlength="120" placeholder="What’s on your mind?"></label><div class="form-row"><label>Date<input type="date" id="event-date" required></label><label>Time (optional)<input type="time" id="event-time"></label></div><label>Notes (optional)<textarea id="event-notes" maxlength="1000" rows="3" placeholder="A place, a reminder, a small detail…"></textarea></label><div class="dialog-actions"><button type="button" id="delete-event" class="danger" hidden>Delete event</button><button type="submit" class="primary">Save event</button></div></form></dialog>
+<div id="notice" class="notice" role="status" hidden></div>
+</body></html>
