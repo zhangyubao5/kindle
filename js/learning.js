@@ -2,30 +2,39 @@
 (function () {
     var words = window.KINDLE_N5_WORDS || [], currentIndices = [], lastMinute = "", lastWordAt = 0;
     var interval = 30 * 60 * 1000;
+    var textScale = 7;
     function parameter(name) {
         var match = new RegExp("[?&]" + name + "=([^&#]*)").exec(window.location.search);
-        return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : "";
+        try { return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : ""; } catch (error) { return ""; }
     }
-    function put(id, value) { document.getElementById(id).textContent = value; }
+    function setText(element, value) {
+        var property = "textContent" in element ? "textContent" : "innerText";
+        if (element[property] !== value) { element[property] = value; }
+    }
+    function put(id, value) { setText(document.getElementById(id), value); }
     function clockMoment() {
         var value = moment(new Date()), offset = parameter("utcOffset");
-        if (/^[+-](?:0\d|1[0-4]):[0-5]\d$/.test(offset)) { value.utcOffset(offset, false); }
-        return value;
+        if (offset === "local") { return value; }
+        if (/^[+-](?:0\d|1[0-4]):[0-5]\d$/.test(offset)) { return value.utcOffset(offset, false); }
+        return value.tz("America/Los_Angeles");
     }
     function updateClock() {
-        var value = clockMoment(), stamp = value.format("YYYY-MM-DD HH:mm Z");
+        var value = clockMoment(), stamp = value.format("YYYY-MM-DD HH:mm Z") + parameter("utcOffset");
         if (stamp !== lastMinute) {
             lastMinute = stamp;
             put("liveClock", value.format("HH:mm"));
             put("date", value.format("dddd, D MMMM YYYY"));
-            put("clockZone", /^[+-]/.test(parameter("utcOffset")) ? "UTC" + value.format("Z") : "Device time");
+            var offset = parameter("utcOffset");
+            put("clockZone", offset === "local" ? "Device time" :
+                (/^[+-]/.test(offset) ? "UTC" + value.format("Z") : "Pacific time (" + value.zoneAbbr() + ")"));
         }
         var mode = parameter("night"), hours = /^(\d{1,2})-(\d{1,2})$/.exec(mode), dark = mode === "on";
         if (hours) {
             var from = Number(hours[1]), to = Number(hours[2]), hour = value.hour();
             dark = from > to ? hour >= from || hour < to : hour >= from && hour < to;
         }
-        document.documentElement.className = dark ? "night" : "";
+        var className = dark ? "night" : "";
+        if (document.documentElement.className !== className) { document.documentElement.className = className; }
     }
     function fit() {
         var nw = window.innerWidth || document.documentElement.clientWidth;
@@ -38,12 +47,14 @@
         if (rotation === "lr") { transform = "translate(0," + nh + "px) rotate(-90deg)"; }
         if (rotation === "up") { transform = "translate(" + nw + "px," + nh + "px) rotate(180deg)"; }
         page.style.transform = transform; page.style.webkitTransform = transform;
-        document.documentElement.style.fontSize = Math.min(height / 100, width / 75) + "px";
+        textScale = Math.min(height / 100, width / 75);
+        document.documentElement.style.fontSize = textScale + "px";
+        sizeText();
         document.getElementById("liveClock").style.fontSize = Math.floor(Math.min(height * 0.23, width * 0.28)) + "px";
     }
     function cell(row, className, text, lang) {
         var element = document.createElement("td");
-        element.className = className; element.textContent = text;
+        element.className = className; setText(element, text);
         if (lang) { element.setAttribute("lang", lang); }
         row.appendChild(element); return element;
     }
@@ -68,13 +79,44 @@
             var reading = cell(row, "word-reading", entry.reading, "ja");
             var romaji = document.createElement("span");
             romaji.className = "word-romaji"; romaji.setAttribute("lang", "en");
-            romaji.textContent = entry.romaji; reading.appendChild(romaji);
+            setText(romaji, entry.romaji); reading.appendChild(romaji);
             // Use a compact first gloss, retaining the full meaning in title and JSON.
             var meaning = cell(row, "word-meaning", entry.meaning.split(";")[0], "en");
             meaning.setAttribute("title", entry.meaning); rows.appendChild(row);
         }
         put("wordCount", words.length ? words.length + " study words · new set every 30 min" : "Word list unavailable");
         lastWordAt = new Date().getTime();
+        sizeText();
+    }
+    function sizeText() {
+        var sizes = {
+            "word-number": Math.max(10, textScale * 1.4),
+            "word-japanese": Math.max(22, textScale * 4.4),
+            "word-reading": Math.max(15, textScale * 2.5),
+            "word-romaji": Math.max(11, textScale * 1.7),
+            "word-meaning": Math.max(15, textScale * 2.4)
+        };
+        var elements = document.getElementById("wordRows").getElementsByTagName("*");
+        for (var i = 0; i < elements.length; i++) {
+            var classes = " " + elements[i].className + " ";
+            for (var name in sizes) {
+                if (classes.indexOf(" " + name + " ") !== -1) { elements[i].style.fontSize = Math.floor(sizes[name]) + "px"; }
+            }
+            if (classes.indexOf(" long-word ") !== -1) { elements[i].style.fontSize = Math.floor(Math.max(20, textScale * 3.2)) + "px"; }
+        }
+        document.getElementById("date").style.fontSize = Math.floor(Math.max(17, textScale * 3)) + "px";
+        document.getElementById("clockZone").style.fontSize = Math.floor(Math.max(12, textScale * 1.5)) + "px";
+        document.getElementById("wordHeading").style.fontSize = Math.floor(Math.max(12, textScale * 1.8)) + "px";
+        document.getElementById("wordCount").style.fontSize = Math.floor(Math.max(10, textScale * 1.4)) + "px";
+    }
+    function tick() {
+        updateClock();
+        if (new Date().getTime() - lastWordAt >= interval) { nextWords(); }
+    }
+    function scheduleTick() {
+        tick();
+        var now = new Date().getTime();
+        window.setTimeout(scheduleTick, Math.min(60000 - (now % 60000) + 100, Math.max(100, lastWordAt + interval - now)));
     }
     window.addEventListener("load", function () {
         var settings = [], names = ["utcOffset", "rotation", "night"];
@@ -87,9 +129,9 @@
         fit(); updateClock(); nextWords();
         document.getElementById("nextWords").onclick = nextWords;
         window.addEventListener("resize", fit);
-        window.setInterval(function () {
-            updateClock();
-            if (new Date().getTime() - lastWordAt >= interval) { nextWords(); }
-        }, 15000);
+        window.addEventListener("focus", tick);
+        window.addEventListener("pageshow", tick);
+        if (document.addEventListener) { document.addEventListener("visibilitychange", function () { if (!document.hidden) { tick(); } }); }
+        scheduleTick();
     });
 }());

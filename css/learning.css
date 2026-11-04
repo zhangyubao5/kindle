@@ -2,4 +2,18 @@
 #clockPanel{position:absolute;top:1%;left:4%;right:4%;height:30%;text-align:center}#liveClock{display:block;font:150px Arial,sans-serif;line-height:1;letter-spacing:-.045em;font-variant-numeric:tabular-nums}#date{font-size:21px;font-size:3rem;margin-top:.4rem}#clockZone{font-size:10px;font-size:1.5rem;margin-top:.6rem}
 #vocabulary{position:absolute;top:34%;left:4%;right:4%;bottom:5%}.word-toolbar{height:11%;position:relative}h1{font-size:12px;font-size:1.8rem;font-weight:normal;letter-spacing:.12em;margin:0}#wordCount{font-size:9px;font-size:1.4rem;margin:.5rem 0 0}#nextWords{position:absolute;right:0;top:0;padding:.7rem 1.1rem;color:inherit;background:transparent;border:1px solid;border-radius:0;font:12px Arial,sans-serif;font-size:1.8rem;cursor:pointer}button:focus-visible,a:focus-visible{outline:2px solid;outline-offset:3px}
 .words-area{position:absolute;top:13%;left:0;right:0;bottom:0;overflow:auto}table{width:100%;height:100%;border-collapse:collapse;table-layout:fixed}tr{height:20%;border-top:1px solid}tr:last-child{border-bottom:1px solid}td{vertical-align:middle;padding:.6rem .7rem;overflow-wrap:break-word;word-wrap:break-word}.word-number{width:5%;font-size:9px;font-size:1.4rem;padding-left:0}.word-japanese{width:27%;font:31px "Noto Sans CJK JP","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;font-size:4.4rem;line-height:1.15}.word-japanese.long-word{font-size:22px;font-size:3.2rem}.word-reading{width:29%;font:17px "Noto Sans CJK JP",Meiryo,sans-serif;font-size:2.5rem;line-height:1.2}.word-romaji{display:block;font:12px Arial,sans-serif;font-size:1.7rem;margin-top:.5rem}.word-meaning{width:39%;font-size:17px;font-size:2.4rem;line-height:1.25;padding-right:0}
-footer{position:absolute;bottom:1%;left:4%;right:4%;font-size:8px;font-size:1.2rem}#settingsLink{float:right}html.night,.night body{color:#fff;background:#000}@media(max-width:480px){.word-reading,.word-meaning{font-size:2.2rem}}
+.page-footer{position:absolute;bottom:1%;left:4%;right:4%;font-size:8px;font-size:1.2rem}#settingsLink{float:right}html.night,.night body{color:#fff;background:#000}@media(max-width:480px){.word-reading,.word-meaning{font-size:2.2rem}}
+
+/* Pixel fallbacks and simple blocks keep the layout usable on old Kindle WebKit. */
+html,body{overflow:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+*{-webkit-box-sizing:border-box}
+#page,#clockPanel,#vocabulary,#liveClock{display:block}
+#vocabulary{bottom:50px}
+.word-toolbar{height:50px}
+.words-area{top:56px;-webkit-overflow-scrolling:touch}
+#nextWords{min-height:44px;min-width:130px;font-size:15px;padding:10px 12px}
+button:focus,a:focus{outline:2px solid;outline-offset:2px}
+.page-footer{bottom:0;height:44px;font-size:11px}
+.page-footer a{display:inline-block;min-height:44px;padding-top:14px}
+td{padding:3px 5px}
+#wordCount{max-width:62%}
