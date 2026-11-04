@@ -100,9 +100,9 @@
         for (var i = 0; i < elements.length; i++) {
             var classes = " " + elements[i].className + " ";
             for (var name in sizes) {
-                if (classes.indexOf(" " + name + " ") !== -1) { elements[i].style.fontSize = Math.floor(sizes[name]) + "px"; }
+                if (classes.indexOf(" " + name + " ") !== -1) { elements[i].style.fontSize = Math.floor(sizes[name]) * (name === "word-japanese" ? 3 : 1) + "px"; }
             }
-            if (classes.indexOf(" long-word ") !== -1) { elements[i].style.fontSize = Math.floor(Math.max(20, textScale * 3.2)) + "px"; }
+            if (classes.indexOf(" long-word ") !== -1) { elements[i].style.fontSize = Math.floor(Math.max(20, textScale * 3.2)) * 3 + "px"; }
         }
         document.getElementById("date").style.fontSize = Math.floor(Math.max(17, textScale * 3)) + "px";
         document.getElementById("clockZone").style.fontSize = Math.floor(Math.max(12, textScale * 1.5)) + "px";
